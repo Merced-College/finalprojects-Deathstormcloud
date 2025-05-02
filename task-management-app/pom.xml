@@ -1,0 +1,21 @@
+task-management-app
+├── src
+│   ├── main
+│   │   └── java
+│   │       ├── Main.java
+│   │       ├── timer
+│   │       │   ├── PomodoroTimer.java
+│   │       │   └── TimerState.java
+│   │       ├── task
+│   │       │   ├── Task.java
+│   │       │   └── TaskQueue.java
+│   │       └── utils
+│   │           └── ConsoleUtils.java
+│   └── test
+│       └── java
+│           ├── timer
+│           │   └── PomodoroTimerTest.java
+│           └── task
+│               └── TaskQueueTest.java
+├── pom.xml
+└── README.md
