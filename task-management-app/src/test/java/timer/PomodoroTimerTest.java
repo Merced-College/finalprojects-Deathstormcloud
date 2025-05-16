@@ -11,27 +11,25 @@ class PomodoroTimerTest {
 
     @BeforeEach
     void setUp() {
-        pomodoroTimer = new PomodoroTimer();
+        pomodoroTimer = new PomodoroTimer(new PomodoroTimer.TimerCallback() {
+            @Override
+            public void onTick(long remainingTime) {}
+            @Override
+            public void onStateChange(TimerState newState) {}
+        });
     }
 
     @Test
     void testStartTimer() {
         pomodoroTimer.start();
-        assertEquals(TimerState.RUNNING, pomodoroTimer.getState());
-    }
-
-    @Test
-    void testStopTimer() {
-        pomodoroTimer.start();
-        pomodoroTimer.stop();
-        assertEquals(TimerState.STOPPED, pomodoroTimer.getState());
+        assertEquals(TimerState.WORKING, pomodoroTimer.getCurrentState());
     }
 
     @Test
     void testPauseTimer() {
         pomodoroTimer.start();
         pomodoroTimer.pause();
-        assertEquals(TimerState.PAUSED, pomodoroTimer.getState());
+        assertEquals(TimerState.PAUSED, pomodoroTimer.getCurrentState());
     }
 
     @Test
@@ -39,12 +37,6 @@ class PomodoroTimerTest {
         pomodoroTimer.start();
         pomodoroTimer.pause();
         pomodoroTimer.resume();
-        assertEquals(TimerState.RUNNING, pomodoroTimer.getState());
-    }
-
-    @Test
-    void testTimerDuration() {
-        pomodoroTimer.setDuration(25); // Set duration to 25 minutes
-        assertEquals(25, pomodoroTimer.getDuration());
+        assertEquals(TimerState.RUNNING, pomodoroTimer.getCurrentState());
     }
 }

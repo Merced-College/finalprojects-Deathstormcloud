@@ -1,3 +1,5 @@
+package timer;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,6 +19,8 @@ public class PomodoroTimer {
     private TimerState currentState;
     private int completedPomodoros;
     private TimerCallback callback;
+    private long remainingTime; // Add this field
+    private boolean isWorkSession; // Add this to track session type
 
     // Interface for timer state callbacks
     public interface TimerCallback {
@@ -29,28 +33,57 @@ public class PomodoroTimer {
         this.currentState = TimerState.IDLE;
         this.completedPomodoros = 0;
         this.callback = callback;
+        this.remainingTime = WORK_TIME; // Initialize with work time
+        this.isWorkSession = true;
     }
 
     // Credit: Timer state management logic assisted by ClaudeAI
     public void start() {
-        if (currentState == TimerState.IDLE || currentState == TimerState.PAUSED) {
+        if (currentState == TimerState.IDLE) {
+            remainingTime = WORK_TIME;
+            isWorkSession = true;
             startWorkSession();
+        } else if (currentState == TimerState.PAUSED) {
+            resumeSession(); // New method to handle resume
         }
+    }
+
+    private void resumeSession() {
+        currentState = isWorkSession ? TimerState.WORKING : TimerState.ON_BREAK;
+        callback.onStateChange(currentState);
+        
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (remainingTime > 0) {
+                    remainingTime -= 1000;
+                    callback.onTick(remainingTime);
+                } else {
+                    this.cancel();
+                    if (isWorkSession) {
+                        handleWorkSessionComplete();
+                    } else {
+                        currentState = TimerState.IDLE;
+                        callback.onStateChange(currentState);
+                    }
+                }
+            }
+        }, 0, 1000);
     }
 
     // Credit: Work session implementation with callback handling by ClaudeAI
     private void startWorkSession() {
         currentState = TimerState.WORKING;
+        isWorkSession = true;
+        remainingTime = WORK_TIME;
         callback.onStateChange(currentState);
         
         timer.scheduleAtFixedRate(new TimerTask() {
-            private long timeRemaining = WORK_TIME;
-
             @Override
             public void run() {
-                if (timeRemaining > 0) {
-                    timeRemaining -= 1000;
-                    callback.onTick(timeRemaining);
+                if (remainingTime > 0) {
+                    remainingTime -= 1000;
+                    callback.onTick(remainingTime);
                 } else {
                     this.cancel();
                     handleWorkSessionComplete();
@@ -80,16 +113,16 @@ public class PomodoroTimer {
     // Credit: Break timer implementation with callback integration by ClaudeAI 
     private void startBreak(long breakDuration) {
         currentState = TimerState.ON_BREAK;
+        isWorkSession = false;
+        remainingTime = breakDuration;
         callback.onStateChange(currentState);
 
         timer.scheduleAtFixedRate(new TimerTask() {
-            private long timeRemaining = breakDuration;
-
             @Override
             public void run() {
-                if (timeRemaining > 0) {
-                    timeRemaining -= 1000;
-                    callback.onTick(timeRemaining);
+                if (remainingTime > 0) {
+                    remainingTime -= 1000;
+                    callback.onTick(remainingTime);
                 } else {
                     this.cancel();
                     currentState = TimerState.IDLE;
@@ -104,6 +137,7 @@ public class PomodoroTimer {
             timer.cancel();
             timer = new Timer();
             currentState = TimerState.PAUSED;
+            // remainingTime is preserved here
             callback.onStateChange(currentState);
         }
     }

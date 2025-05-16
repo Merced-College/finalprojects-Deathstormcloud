@@ -11,49 +11,17 @@ The Task Management Terminal Application is a command-line tool designed to help
 - Queue handling for tasks
 - Command-line interface for user interaction
 
-## Project Structure
-```
-task-management-app
-├── src
-│   ├── main
-│   │   └── java
-│   │       ├── Main.java
-│   │       ├── timer
-│   │       │   ├── PomodoroTimer.java
-│   │       │   └── TimerState.java
-│   │       ├── task
-│   │       │   ├── Task.java
-│   │       │   └── TaskQueue.java
-│   │       └── utils
-│   │           └── ConsoleUtils.java
-│   └── test
-│       └── java
-│           ├── timer
-│           │   └── PomodoroTimerTest.java
-│           └── task
-│               └── TaskQueueTest.java
-├── pom.xml
-└── README.md
-```
-
-## Setup Instructions
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```
-   cd task-management-app
-   ```
-3. Build the project using Maven:
-   ```
-   mvn clean install
-   ```
-
 ## Usage
 To run the application, execute the following command:
 ```
-java -cp target/task-management-app-1.0-SNAPSHOT.jar Main
+javac Main.java task/*.java timer/*.java utils/*.java
+
+running the application
+
+java Main
+
+debug command to delete classes
+Get-ChildItem -Path . -Filter *.class -Recurse | Remove-Item -Force
 ```
 
 Follow the on-screen instructions to manage your tasks and utilize the Pomodoro timer.

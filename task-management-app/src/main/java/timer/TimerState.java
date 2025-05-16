@@ -1,3 +1,5 @@
+package timer;
+
 // Enum for Pomodoro timer states
 // Part of timer management structure
 public enum TimerState {

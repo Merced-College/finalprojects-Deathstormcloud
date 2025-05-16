@@ -1,3 +1,5 @@
+package utils;
+
 // Utility class for console I/O operations
 // Part of basic Java structure setup
 import java.util.Scanner;

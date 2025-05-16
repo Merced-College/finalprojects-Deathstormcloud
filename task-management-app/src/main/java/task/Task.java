@@ -1,3 +1,5 @@
+package task;
+
 // Basic Task class structure design
 // Represents core task entity with priority and status tracking
 import java.time.LocalDateTime;
@@ -8,11 +10,11 @@ public class Task {
     private LocalDateTime dueDate;
     private boolean isCompleted;
 
-    public Task(String title, int priority, LocalDateTime dueDate) {
+    public Task(String title, int priority, LocalDateTime dueDate, boolean isCompleted) {
         this.title = title;
         this.priority = priority;
         this.dueDate = dueDate;
-        this.isCompleted = false;
+        this.isCompleted = isCompleted;
     }
 
     public String getTitle() {
@@ -38,10 +40,10 @@ public class Task {
     @Override
     public String toString() {
         return "Task{" +
-                "title='" + title + '\'' +
-                ", priority=" + priority +
-                ", dueDate=" + dueDate +
-                ", isCompleted=" + isCompleted +
+                "title= '" + title + '\'' +
+                ", priority= " + priority +
+                ", due Date= " + dueDate +
+                ", is Completed= " + isCompleted +
                 '}';
     }
 }

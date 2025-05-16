@@ -4,6 +4,8 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TaskQueueTest {
@@ -16,7 +18,7 @@ class TaskQueueTest {
 
     @Test
     void testEnqueue() {
-        Task task = new Task("Test Task", 1, null, false);
+        Task task = new Task("Test Task", 1, LocalDateTime.now());
         taskQueue.enqueue(task);
         assertEquals(task, taskQueue.peek());
     }
@@ -27,7 +29,7 @@ class TaskQueueTest {
         Task task2 = new Task("Test Task 2", 2, null, false);
         taskQueue.enqueue(task1);
         taskQueue.enqueue(task2);
-        
+
         assertEquals(task1, taskQueue.dequeue());
         assertEquals(task2, taskQueue.peek());
     }
