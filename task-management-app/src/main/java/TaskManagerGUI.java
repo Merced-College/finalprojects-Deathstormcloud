@@ -18,6 +18,10 @@ import javafx.collections.ObservableList;
 import javafx.stage.Modality;
 import javafx.geometry.Pos;
 import task.TaskHistory;
+import task.TaskCategory;
+import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TaskManagerGUI extends Application {
     private TaskQueue taskQueue;
@@ -31,24 +35,29 @@ public class TaskManagerGUI extends Application {
     private ListView<Task> historyListView;
     private Tab tasksTab;
     private Tab historyTab;
+    private TaskCategory taskCategories;
+    private TabPane categoryTabPane;
+    private Map<String, ListView<Task>> categoryListViews;
 
     @Override
     public void start(Stage primaryStage) {
         taskQueue = new TaskQueue();
         taskItems = FXCollections.observableArrayList();
         taskHistory = new TaskHistory();
+        taskCategories = new TaskCategory();
+        categoryListViews = new HashMap<>();
         initializePomodoroTimer();
 
-        TabPane tabPane = new TabPane();
+        TabPane mainTabPane = new TabPane();
         
-        // Tasks tab
+        // Tasks tab (contains timer and category tabs)
         tasksTab = new Tab("Tasks");
         tasksTab.setClosable(false);
         VBox tasksBox = new VBox(10);
         tasksBox.setPadding(new Insets(10));
         tasksBox.setAlignment(Pos.TOP_CENTER);
 
-        // Timer section with better spacing
+        // Timer section
         timerLabel = new Label("25:00");
         timerLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         
@@ -57,21 +66,23 @@ public class TaskManagerGUI extends Application {
         HBox timerControls = new HBox(10, startPomodoroButton, pauseResumeButton);
         timerControls.setAlignment(Pos.CENTER);
 
-        // Task section
+        // Category section
+        HBox categoryControls = new HBox(10);
         Button addTaskButton = new Button("Add Task");
-        taskListView = new ListView<>(taskItems);
-        taskListView.setMaxHeight(Double.MAX_VALUE);
-        VBox.setVgrow(taskListView, Priority.ALWAYS);
+        Button newCategoryButton = new Button("New Category");
+        Button completeTaskButton = new Button("Complete Task"); // Changed from deleteCategoryButton
+        categoryControls.getChildren().addAll(addTaskButton, newCategoryButton, completeTaskButton);
+        categoryControls.setAlignment(Pos.CENTER);
 
-        // Add complete task button to task list
-        Button completeTaskButton = new Button("Complete Selected Task");
-        
+        // Category tabs
+        categoryTabPane = new TabPane();
+        VBox.setVgrow(categoryTabPane, Priority.ALWAYS);
+
         tasksBox.getChildren().addAll(
             timerLabel,
             timerControls,
-            addTaskButton,
-            taskListView,
-            completeTaskButton
+            categoryControls,
+            categoryTabPane
         );
         tasksTab.setContent(tasksBox);
 
@@ -90,18 +101,17 @@ public class TaskManagerGUI extends Application {
         historyBox.getChildren().addAll(historyLabel, historyListView);
         historyTab.setContent(historyBox);
 
-        // Add tabs to tab pane
-        tabPane.getTabs().addAll(tasksTab, historyTab);
+        mainTabPane.getTabs().addAll(tasksTab, historyTab);
 
-        setupEventHandlers(addTaskButton, completeTaskButton);
+        setupEventHandlers(addTaskButton, newCategoryButton, completeTaskButton);
 
-        Scene scene = new Scene(tabPane, 400, 600);
+        Scene scene = new Scene(mainTabPane, 600, 800);
         primaryStage.setTitle("Task Manager");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    private void setupEventHandlers(Button addTaskButton, Button completeTaskButton) {
+    private void setupEventHandlers(Button addTaskButton, Button newCategoryButton, Button completeTaskButton) {
         startPomodoroButton.setOnAction(e -> pomodoroTimer.start());
         
         pauseResumeButton.setOnAction(e -> {
@@ -112,21 +122,94 @@ public class TaskManagerGUI extends Application {
             }
         });
 
-        addTaskButton.setOnAction(e -> showAddTaskDialog());
-
-        // Set up complete task button handler
+        newCategoryButton.setOnAction(e -> showNewCategoryDialog());
+        
+        // New complete task handler
         completeTaskButton.setOnAction(e -> {
-            Task selectedTask = taskListView.getSelectionModel().getSelectedItem();
-            if (selectedTask != null) {
-                selectedTask.markAsCompleted();
-                taskItems.remove(selectedTask);
-                taskHistory.addCompletedTask(selectedTask);
-                updateHistoryView();
+            Tab selectedTab = categoryTabPane.getSelectionModel().getSelectedItem();
+            if (selectedTab != null) {
+                ListView<Task> listView = categoryListViews.get(selectedTab.getText());
+                Task selectedTask = listView.getSelectionModel().getSelectedItem();
+                
+                if (selectedTask != null) {
+                    selectedTask.markAsCompleted();
+                    taskHistory.addCompletedTask(selectedTask);
+                    
+                    // Remove from category and update views
+                    taskCategories.getTasksInCategory(selectedTab.getText()).remove(selectedTask);
+                    updateHistoryView();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("No Task Selected");
+                    alert.setHeaderText("Please select a task to complete");
+                    alert.showAndWait();
+                }
+            }
+        });
+
+        addTaskButton.setOnAction(e -> showAddTaskDialog());
+    }
+
+    private void showNewCategoryDialog() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New Category");
+        dialog.setHeaderText("Create a new category");
+        dialog.setContentText("Category name:");
+
+        dialog.showAndWait().ifPresent(name -> {
+            if (!name.trim().isEmpty()) {
+                taskCategories.addCategory(name);
+                createCategoryTab(name);
             }
         });
     }
 
+    private void createCategoryTab(String categoryName) {
+        Tab categoryTab = new Tab(categoryName);
+        categoryTab.setClosable(true); // Enable close button
+        
+        // Add close request handler
+        categoryTab.setOnCloseRequest(event -> {
+            event.consume(); // Prevent immediate closing
+            showDeleteCategoryConfirmation(categoryName, categoryTab);
+        });
+
+        ListView<Task> categoryListView = new ListView<>();
+        categoryListView.setItems(taskCategories.getTasksInCategory(categoryName));
+        categoryListViews.put(categoryName, categoryListView);
+        
+        VBox categoryBox = new VBox(10);
+        categoryBox.setPadding(new Insets(10));
+        categoryBox.getChildren().add(categoryListView);
+        
+        categoryTab.setContent(categoryBox);
+        categoryTabPane.getTabs().add(categoryTab);
+    }
+
+    private void showDeleteCategoryConfirmation(String categoryName, Tab tab) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Category");
+        alert.setHeaderText("Delete category: " + categoryName);
+        alert.setContentText("Are you sure? This will delete all tasks in this category.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            taskCategories.removeCategory(categoryName);
+            categoryTabPane.getTabs().remove(tab);
+            categoryListViews.remove(categoryName);
+        }
+    }
+
     private void showAddTaskDialog() {
+        Tab selectedTab = categoryTabPane.getSelectionModel().getSelectedItem();
+        if (selectedTab == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No Category Selected");
+            alert.setHeaderText("Please select or create a category first");
+            alert.showAndWait();
+            return;
+        }
+
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.setTitle("Add New Task");
@@ -141,6 +224,10 @@ public class TaskManagerGUI extends Application {
             FXCollections.observableArrayList(1, 2, 3, 4, 5)
         );
         DatePicker datePicker = new DatePicker();
+        
+        // Replace category combo box with selected category
+        String categoryName = selectedTab.getText();
+        
         Button submitButton = new Button("Add Task");
 
         grid.add(new Label("Title:"), 0, 0);
@@ -149,8 +236,11 @@ public class TaskManagerGUI extends Application {
         grid.add(priorityCombo, 1, 1);
         grid.add(new Label("Due Date:"), 0, 2);
         grid.add(datePicker, 1, 2);
-        grid.add(submitButton, 1, 3);
+        grid.add(new Label("Category:"), 0, 3);
+        grid.add(new Label(categoryName), 1, 3); // Display selected category
+        grid.add(submitButton, 1, 4);
 
+        // Update submit button action
         submitButton.setOnAction(e -> {
             if (!titleField.getText().isEmpty() && priorityCombo.getValue() != null) {
                 LocalDateTime dueDate = datePicker.getValue() != null ? 
@@ -165,6 +255,7 @@ public class TaskManagerGUI extends Application {
                 
                 taskQueue.enqueue(task);
                 taskItems.add(task);
+                taskCategories.addTaskToCategory(categoryName, task);
                 dialog.close();
             }
         });
