@@ -67,9 +67,23 @@ public class Main {
     private static void addTask(Scanner scanner) {
         System.out.print("Enter task title: ");
         String title = scanner.nextLine();
+        
         System.out.print("Enter priority (1-5): ");
         int priority = Integer.parseInt(scanner.nextLine());
-        Task task = new Task(title, priority, LocalDateTime.now(), false);
+        
+        LocalDateTime dueDate = null;
+        System.out.print("Enter due date (YYYY-MM-DD) or press Enter for no due date: ");
+        String dueDateStr = scanner.nextLine().trim();
+        
+        if (!dueDateStr.isEmpty()) {
+            try {
+                dueDate = LocalDateTime.parse(dueDateStr + "T00:00:00");
+            } catch (Exception e) {
+                System.out.println("Invalid date format. Using no due date.");
+            }
+        }
+        
+        Task task = new Task(title, priority, dueDate, false);
         taskQueue.enqueue(task);
         System.out.println("Task added successfully!");
     }

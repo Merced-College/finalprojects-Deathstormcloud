@@ -39,11 +39,11 @@ public class Task {
 
     @Override
     public String toString() {
-        return "Task{" +
-                "title= '" + title + '\'' +
-                ", priority= " + priority +
-                ", due Date= " + dueDate +
-                ", is Completed= " + isCompleted +
-                '}';
+        return String.format("%s (Priority: %d, Due: %s, Completed: %s)",
+            title,
+            priority,
+            dueDate != null ? dueDate.toLocalDate() : "No due date",
+            isCompleted ? "Yes" : "No"
+        );
     }
 }
