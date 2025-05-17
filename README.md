@@ -15,20 +15,18 @@ The Task Management Terminal Application is a command-line tool designed to help
 - Queue handling for tasks
 - Command-line interface for user interaction
 
-## Usage
-To run the application, execute the following command:
-```
-javac Main.java task/*.java timer/*.java utils/*.java
+## Debug
+# Navigate to source directory
+cd C:\Users\rainl\OneDrive\Documents\GitHub\finalprojects-Deathstormcloud\task-management-app\src\main\java
 
-running the application
+# Clean existing class files
+Get-ChildItem -Path ../../../target/classes -Include *.class -Recurse | Remove-Item -Force
 
-java Main
+# Compile
+javac --module-path "D:/Downloads/javafx-sdk-17.0.9/lib" --add-modules javafx.controls,javafx.fxml -d ../../../target/classes module-info.java task/*.java timer/*.java *.java
 
-debug command to delete classes
-Get-ChildItem -Path . -Filter *.class -Recurse | Remove-Item -Force
-```
-
-Follow the on-screen instructions to manage your tasks and utilize the Pomodoro timer.
+# Run
+java --module-path "D:/Downloads/javafx-sdk-17.0.9/lib" --add-modules javafx.controls,javafx.fxml -cp ../../../target/classes TaskManagerGUI
 
 ## Assignment requirements
 

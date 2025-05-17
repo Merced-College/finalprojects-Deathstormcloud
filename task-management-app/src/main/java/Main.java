@@ -4,7 +4,6 @@ import task.Task;
 import task.TaskQueue;
 import timer.PomodoroTimer;
 import timer.TimerState;
-import utils.ConsoleUtils;
 
 // Main application entry point
 // Sets up basic Java structure and program flow
